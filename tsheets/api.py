@@ -1,5 +1,4 @@
 import requests
-from httplib import HTTPException
 from .models import (User,
                      CurrentUser,
                      Timesheet,
@@ -53,7 +52,6 @@ class API(object):
         
         raises:
             TSheetsError
-            HTTPException
         """
         # TODO: modify this method so it can handle POST requests (for API's insert/create operations)
         #       or create a separated method.  haven't decided yet. :p
@@ -67,21 +65,18 @@ class API(object):
         return_json = payload.get('return_json', False)
         payload.pop('return_json', None)
 
-        try:
-            response = self._session.get(url, params=payload)
-            if response.status_code == 200:
-                if return_json: return response.json()
-                tsobject_results = response.json()['results'][model._result_object_key]
-                # TODO: add code to handle supplemental data and more
-                tsobjects = tsobject_results.values() if hasattr(tsobject_results, 'values') else tsobject_results
-                for tsobject in tsobjects:
-                    model_instance = model(api=self, **tsobject)
-                    result.append(model_instance)
-                return result
-            else:
-                raise TSheetsError(response.status_code, response.content)
-        except HTTPException as error:
-            raise error
+        response = self._session.get(url, params=payload)
+        if response.status_code == 200:
+            if return_json: return response.json()
+            tsobject_results = response.json()['results'][model._result_object_key]
+            # TODO: add code to handle supplemental data and more
+            tsobjects = tsobject_results.values() if hasattr(tsobject_results, 'values') else tsobject_results
+            for tsobject in tsobjects:
+                model_instance = model(api=self, **tsobject)
+                result.append(model_instance)
+            return result
+        else:
+            raise TSheetsError(response.status_code, response.content)
 
     def get_json(self, model, **kwargs):
         """
@@ -261,7 +256,6 @@ class API(object):
 
         raises:
            TsheetsError
-           HTTPException
            
         return data format:
         {
